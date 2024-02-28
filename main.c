@@ -36,11 +36,23 @@ int main(int argc, char * argv[]) {
             Request r;
             int nBytesReadHijo;
             while( (nBytesReadHijo = read(pipeA[0], &r, sizeof(r)) ) > 0) {
-                printf("Hijoooo\n");
+                //printf("%d\n", r.nBlock);
+                int vamoAleer = 1; // para leer chill
                 if (!r.isGet) {
-
+                    printf("Entramoooooooooos\n");
                     /* Recompute the CRC, use lseek to get the correct datablock,
                     and store it in the correct position of the CRC file. Remember to use approppriate locks! */
+                    int correctDatablock = r.nBlock*256;
+                    off_t punteroFd = lseek(fd, correctDatablock, SEEK_SET);
+                    off_t punteroFdCRC = lseek(fdCRC, r.nBlock, SEEK_SET);
+                    char buff[257];
+                    vamoAleer = read(fd, buff, 256);
+                    printf("%s\n", buff);
+                    unsigned short crcBlockNum = crcSlow(buff, strlen(buff));
+                    if (write(fdCRC, &crcBlockNum, sizeof(crcBlockNum)) == -1){
+                        printf("No estamos imprimiendo el crc bien ;(\n");
+                    }
+                    printf("Se ha imprimido en el fichero %s el CRC en el bloque %d ;)\n", argv[2], r.nBlock);
                     usleep(rand()%1000 *1000); // Make the computation a bit slower
 
                 }
@@ -49,8 +61,13 @@ int main(int argc, char * argv[]) {
                     Result res;
                     res.nBlock = r.nBlock;
                     // Read the CRC from the CRC file, using lseek + read. Remember to use the correct locks!
-
+                    off_t punteroFdCRC = lseek(fdCRC, res.nBlock, SEEK_SET);  
+                    unsigned short crcBlockNumLect;
+                    vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
+                    printf("El crc QUE TE LO DICE TU HIJITO es de: %hu\n", crcBlockNumLect);
                     //Write the result in pipeB!
+                    res.crc = crcBlockNumLect;
+                    write(pipeB[1], &res, sizeof(res));
                 }
             }
 
