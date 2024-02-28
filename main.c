@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct {
     int nBlock;
-    short int crc;
+    unsigned short crc;
 } Result;
 
 
@@ -46,31 +46,40 @@ int main(int argc, char * argv[]) {
                     off_t punteroFd = lseek(fd, correctDatablock, SEEK_SET);
                     off_t punteroFdCRC = lseek(fdCRC, r.nBlock, SEEK_SET);
                     char buff[257];
+                    file_lock_read(fd, correctDatablock, punteroFd+256);
                     vamoAleer = read(fd, buff, 256);
+                    file_unlock(fd, correctDatablock, punteroFd+256);
                     printf("%s\n", buff);
                     unsigned short crcBlockNum = crcSlow(buff, strlen(buff));
+                    file_lock_write(fdCRC, r.nBlock, punteroFdCRC+2);
                     if (write(fdCRC, &crcBlockNum, sizeof(crcBlockNum)) == -1){
+                        file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
                         printf("No estamos imprimiendo el crc bien ;(\n");
                     }
+                    file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
                     printf("Se ha imprimido en el fichero %s el CRC en el bloque %d ;)\n", argv[2], r.nBlock);
                     usleep(rand()%1000 *1000); // Make the computation a bit slower
 
                 }
                 else{
-                    usleep(rand()%1000 *1000);
                     Result res;
                     res.nBlock = r.nBlock;
                     // Read the CRC from the CRC file, using lseek + read. Remember to use the correct locks!
                     off_t punteroFdCRC = lseek(fdCRC, res.nBlock, SEEK_SET);  
                     unsigned short crcBlockNumLect;
+                    file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2);
                     vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
+                    file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
                     printf("El crc QUE TE LO DICE TU HIJITO es de: %hu\n", crcBlockNumLect);
                     //Write the result in pipeB!
                     res.crc = crcBlockNumLect;
                     write(pipeB[1], &res, sizeof(res));
+                    usleep(rand()%1000 *1000);
+
                 }
             }
-
+            close(fd);
+            close(fdCRC);
             exit(0);
         }
     }
@@ -94,10 +103,10 @@ int main(int argc, char * argv[]) {
 
     printf("FINISHED\n");
     while(wait(NULL) == -1);
-
+    
     // Now that is finished, write all the results
     Result res;
-    while((nBytesRead = read(pipeB[0], &res, sizeof(res)) ) > 0) {
-        printf("The CRC of block #%d is %d \n", res.nBlock, res.crc);
+    while((nBytesRead = read(pipeB[0], &res, sizeof(res)) ) > 0) { //No hace este while, supongo que no escribe bien en la pipeB
+        printf("The CRC of block #%d is %ho \n", res.nBlock, res.crc);
     }
 }
