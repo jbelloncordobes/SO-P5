@@ -36,7 +36,7 @@ int main(int argc, char * argv[]) {
             Request r;
             int nBytesReadHijo;
             while( (nBytesReadHijo = read(pipeA[0], &r, sizeof(r)) ) > 0) {
-                printf("%d\n", nBytesReadHijo);
+                //printf("%d\n", nBytesReadHijo);
                 int vamoAleer = 1; // para leer chill
                 if (!r.isGet) {
                     // printf("Entramoooooooooos\n");
@@ -72,7 +72,7 @@ int main(int argc, char * argv[]) {
                     file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2);
                     vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
                     file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
-                    printf("El crc QUE TE LO DICE TU HIJITO es de: %hu\n", crcBlockNumLect);
+                    //printf("El crc QUE TE LO DICE TU HIJITO es de: %hu\n", crcBlockNumLect);
                     //Write the result in pipeB!
                     res.crc = crcBlockNumLect;
                     write(pipeB[1], &res, sizeof(res));
@@ -80,7 +80,7 @@ int main(int argc, char * argv[]) {
 
                 }
             }
-            printf("%d\n", nBytesReadHijo);
+            //printf("%d\n", nBytesReadHijo);
             printf("Terminado\n");
             close(pipeB[1]);
             close(fd);
