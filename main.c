@@ -43,8 +43,9 @@ int main(int argc, char * argv[]) {
                     /* Recompute the CRC, use lseek to get the correct datablock,
                     and store it in the correct position of the CRC file. Remember to use approppriate locks! */
                     int correctDatablock = r.nBlock*256;
+                    int correctCRCblock = r.nBlock*2;
                     off_t punteroFd = lseek(fd, correctDatablock, SEEK_SET);
-                    off_t punteroFdCRC = lseek(fdCRC, r.nBlock, SEEK_SET);
+                    off_t punteroFdCRC = lseek(fdCRC, r.correctCRCblock, SEEK_SET);
                     char buff[257];
                     file_lock_read(fd, correctDatablock, punteroFd+256);
                     vamoAleer = read(fd, buff, 256);
