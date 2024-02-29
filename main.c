@@ -36,10 +36,7 @@ int main(int argc, char * argv[]) {
             Request r;
             int nBytesReadHijo;
             while( (nBytesReadHijo = read(pipeA[0], &r, sizeof(r)) ) > 0) {
-                //printf("%d\n", nBytesReadHijo);
-                int vamoAleer = 1; // para leer chill
                 if (!r.isGet) {
-                    // printf("Entramoooooooooos\n");
                     /* Recompute the CRC, use lseek to get the correct datablock,
                     and store it in the correct position of the CRC file. Remember to use approppriate locks! */
                     int correctDatablock = r.nBlock*256;
@@ -48,18 +45,15 @@ int main(int argc, char * argv[]) {
                     off_t punteroFdCRC = lseek(fdCRC, correctCRCblock, SEEK_SET);
                     char buff[257];
                     file_lock_read(fd, correctDatablock, punteroFd+256);
-                    vamoAleer = read(fd, buff, 256);
+                    read(fd, buff, 256);
                     file_unlock(fd, correctDatablock, punteroFd+256);
-                    //printf("%d - %s\n", strlen(buff), buff);
                     unsigned short crcBlockNum = crcSlow(buff, strlen(buff));
-                    printf("%hu\n", crcBlockNum);
                     file_lock_write(fdCRC, r.nBlock, punteroFdCRC+2);
                     if (write(fdCRC, &crcBlockNum, sizeof(crcBlockNum)) == -1){
                         file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
-                        printf("No estamos imprimiendo el crc bien ;(\n");
+                        printf("Can't write to file, check permissions\n");
                     }
                     file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
-                    // printf("Se ha imprimido en el fichero %s el CRC en el bloque %d ;)\n", argv[2], r.nBlock);
                     usleep(rand()%1000 *1000); // Make the computation a bit slower
 
                 }
@@ -71,9 +65,9 @@ int main(int argc, char * argv[]) {
                     off_t punteroFdCRC = lseek(fdCRC, correctCRCblock, SEEK_SET);  
                     unsigned short crcBlockNumLect;
                     file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2);
-                    vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
+                    // vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
+                    read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
                     file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
-                    //printf("El crc QUE TE LO DICE TU HIJITO es de: %hu\n", crcBlockNumLect);
                     //Write the result in pipeB!
                     res.crc = crcBlockNumLect;
                     write(pipeB[1], &res, sizeof(res));
@@ -82,7 +76,6 @@ int main(int argc, char * argv[]) {
                 }
             }
             //printf("%d\n", nBytesReadHijo);
-            printf("Terminado\n");
             close(pipeB[1]);
             close(fd);
             close(fdCRC);
@@ -110,7 +103,6 @@ int main(int argc, char * argv[]) {
     printf("FINISHED\n");
     close(pipeA[1]); // Señal para que los hijos salgan del while
     while(wait(NULL) == -1);
-    printf("Succesfully waited\n");
     // Now that is finished, write all the results
     Result res;
     while((nBytesRead = read(pipeB[0], &res, sizeof(res)) ) > 0) { //No hace este while, supongo que no escribe bien en la pipeB
