@@ -113,6 +113,6 @@ int main(int argc, char * argv[]) {
     // Now that is finished, write all the results
     Result res;
     while((nBytesRead = read(pipeB[0], &res, sizeof(res)) ) > 0) { //No hace este while, supongo que no escribe bien en la pipeB
-        printf("The CRC of block #%d is %ho \n", res.nBlock, res.crc);
+        printf("The CRC of block #%d is %hu \n", res.nBlock, res.crc);
     }
 }
