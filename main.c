@@ -66,8 +66,9 @@ int main(int argc, char * argv[]) {
                 else{
                     Result res;
                     res.nBlock = r.nBlock;
+                    int correctCRCblock = r.nBlock*2;
                     // Read the CRC from the CRC file, using lseek + read. Remember to use the correct locks!
-                    off_t punteroFdCRC = lseek(fdCRC, res.nBlock, SEEK_SET);  
+                    off_t punteroFdCRC = lseek(fdCRC, correctCRCblock, SEEK_SET);  
                     unsigned short crcBlockNumLect;
                     file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2);
                     vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
