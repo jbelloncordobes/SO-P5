@@ -44,11 +44,16 @@ int main(int argc, char * argv[]) {
                     off_t punteroFd = lseek(fd, correctDatablock, SEEK_SET);
                     off_t punteroFdCRC = lseek(fdCRC, correctCRCblock, SEEK_SET);
                     char buff[257];
-                    file_lock_read(fd, correctDatablock, punteroFd+256);
+                    while (file_lock_read(fd, correctDatablock, punteroFd+256) != 0)
+                    {
+                        usleep(rand()%1000 *1000);
+                    }
                     read(fd, buff, 256);
                     file_unlock(fd, correctDatablock, punteroFd+256);
                     unsigned short crcBlockNum = crcSlow(buff, strlen(buff));
-                    file_lock_write(fdCRC, r.nBlock, punteroFdCRC+2);
+                    while (file_lock_write(fdCRC, r.nBlock, punteroFdCRC+2) == 0){
+                        usleep(rand()%1000 *1000);
+                    }
                     if (write(fdCRC, &crcBlockNum, sizeof(crcBlockNum)) == -1){
                         file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
                         printf("Can't write to file, check permissions\n");
@@ -64,7 +69,10 @@ int main(int argc, char * argv[]) {
                     // Read the CRC from the CRC file, using lseek + read. Remember to use the correct locks!
                     off_t punteroFdCRC = lseek(fdCRC, correctCRCblock, SEEK_SET);  
                     unsigned short crcBlockNumLect;
-                    file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2);
+                    while (file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2) != 0) // 0 Si s'ha agafat correctament.
+                    {
+                        usleep(rand()%1000 *1000); // busy wait
+                    }
                     // vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
                     read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
                     file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
