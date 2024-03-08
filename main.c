@@ -52,7 +52,7 @@ int main(int argc, char * argv[]) {
                     file_lock_write(fdCRC, r.nBlock, punteroFdCRC+2);
                     
                     if (write(fdCRC, &crcBlockNum, sizeof(crcBlockNum)) == -1){
-                        file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
+                        // file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
                         printf("Can't write to file, check permissions\n");
                     }
                     file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
@@ -66,8 +66,7 @@ int main(int argc, char * argv[]) {
                     // Read the CRC from the CRC file, using lseek + read. Remember to use the correct locks!
                     off_t punteroFdCRC = lseek(fdCRC, correctCRCblock, SEEK_SET);  
                     unsigned short crcBlockNumLect;
-                    file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2) // 0 Si s'ha agafat correctament.                    
-                    // vamoAleer = read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
+                    file_lock_read(fdCRC, r.nBlock, punteroFdCRC+2); // 0 Si s'ha agafat correctament.                    
                     read(fdCRC, &crcBlockNumLect, sizeof(unsigned short));
                     file_unlock(fdCRC, r.nBlock, punteroFdCRC+2);
                     //Write the result in pipeB!
@@ -77,8 +76,6 @@ int main(int argc, char * argv[]) {
 
                 }
             }
-            //printf("%d\n", nBytesReadHijo);
-            // close(pipeA[0]);
             close(pipeB[1]);
             close(fd);
             close(fdCRC);
@@ -108,7 +105,7 @@ int main(int argc, char * argv[]) {
     while(wait(NULL) == -1);
     // Now that is finished, write all the results
     Result res;
-    while((nBytesRead = read(pipeB[0], &res, sizeof(res)) ) > 0) { //No hace este while, supongo que no escribe bien en la pipeB
+    while((nBytesRead = read(pipeB[0], &res, sizeof(res)) ) > 0) {
         printf("The CRC of block #%d is %hu \n", res.nBlock, res.crc);
     }
 
